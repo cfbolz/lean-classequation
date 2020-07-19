@@ -16,14 +16,15 @@ def centralizer (s : set α) : subgroup α := {
   mul_mem' := λ x y hx hy a ha, by rw [mul_assoc, hy a ha, ←mul_assoc, hx a ha, mul_assoc],
   inv_mem' := λ x hx a ha, by rw [←mul_right_inj x, ←mul_assoc, mul_inv_self, one_mul, ←mul_assoc, hx a ha, mul_inv_cancel_right],
 }
+
 def centralizer_element (s : α) : subgroup α :=
   centralizer {s}
 
-instance fintype_quotient {α : Type*} (s : set α) [group α] [fintype α] (h : is_subgroup s) :
-  fintype(quotient_group.quotient s) := quotient.fintype $ quotient_group.left_rel s
+instance fintype_quotient (s : set α) [fintype α] (h : is_subgroup s) :
+  fintype(quotient_group.quotient s) := quotient.fintype $ _
 
-def index_subgroup {α : Type*} [group α] [fintype α] (β : subgroup α) : ℕ :=
-  fintype.card(@quotient_group.quotient _ _ β.carrier (subgroup.is_subgroup β))
+def index_subgroup [fintype α] (b : subgroup α) : ℕ :=
+  fintype.card(@quotient_group.quotient _ _ b.carrier (subgroup.is_subgroup b))
 
 def conj_action (α : Type*) [group α] : mul_action α α := {
   smul := λ a b, a * b * a⁻¹,
@@ -51,13 +52,12 @@ begin
   { intro hx, rw hx, exact mul_inv_eq_of_eq_mul rfl }
 end
 
-lemma disjoint_finset_of_disjoint {α} [fintype α] {s t : set α} (h : disjoint s t) :
+lemma disjoint_finset_of_disjoint {α : Type*} [fintype α] {s t : set α} (h : disjoint s t) :
   disjoint s.to_finset t.to_finset := 
 begin
   intros a hinter,
   have hset : a ∈ ∅, 
-  { rw ←set.bot_eq_empty,
-    rw ←le_bot_iff.mp h,
+  { rw [←set.bot_eq_empty, ←le_bot_iff.mp h],
     apply (set.mem_inter_iff a s t).mpr,
     split, 
       exact set.mem_to_finset.mp (finset.mem_of_mem_inter_left hinter),
@@ -95,11 +95,8 @@ theorem card_eq_card_center_add_sum_card_centralizers [fintype α] (r : finset �
 begin
   conv_rhs begin congr, skip, congr, skip, funext, rw ←card_conj_class_eq_card_quotient_stabilizer, rw ←set.to_finset_card end,
   change finset.univ.card = fintype.card ↥((subgroup.center α).carrier) + _,
-  rw ←finset.sdiff_union_of_subset (subgroup.center α).carrier.to_finset.subset_univ,
-  rw finset.card_disjoint_union (finset.sdiff_disjoint),
-  rw add_comm,
-  rw ←hcover,
-  rw finset.card_bind,
-  { rw add_left_inj, rw set.to_finset_card },
+  rw [←finset.sdiff_union_of_subset (subgroup.center α).carrier.to_finset.subset_univ,
+      finset.card_disjoint_union (finset.sdiff_disjoint), add_comm, ←hcover, finset.card_bind],
+  { rw [add_left_inj, set.to_finset_card] },
   exact λ x hx y hy hxyne, disjoint_finset_of_disjoint (hdisjoint x y hx hy hxyne),
 end
