@@ -8,7 +8,7 @@ open_locale classical
 open_locale big_operators
 noncomputable theory
 
-variables {α β : Type*} [group α] {s : set α} [is_subgroup s] [mul_action α β]
+variables {α β : Type*} [group α] [mul_action α β]
 
 /-- The centralizer of a set of group elements. -/
 def centralizer (s : set α) : subgroup α := {
@@ -42,6 +42,12 @@ def conj_action (α : Type*) [group α] : mul_action α α := {
   one_smul := by simp,
   mul_smul := λ a b c, by group,
 }
+
+def one_le_card_group [fintype α] :
+  1 ≤ fintype.card α := by rw ←finset.card_singleton (1 : α); apply finset.card_le_of_subset; simp
+
+def index_subgroup_eq_div [fintype α] (b : subgroup α) :
+  index_subgroup b = fintype.card α / fintype.card b := (nat.div_eq_of_eq_mul_left (one_le_card_group) (card_group_eq_index_subgroup_mul_card_subgroup b)).symm
 
 /-- Equivalence class of g under conjugation. -/
 def conj_class (g : α) : set α := {a : α | is_conj g a}
