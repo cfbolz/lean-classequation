@@ -1,12 +1,39 @@
 import tactic
-import group_theory.subgroup data.fintype.basic group_theory.coset
-import group_theory.group_action
 import data.fintype.basic
+import group_theory.subgroup
+import group_theory.coset
+import group_theory.group_action
 import deprecated.subgroup
 
 open_locale classical
 open_locale big_operators
 noncomputable theory
+
+section finset
+
+/-- If two sets are disjoint, converting them to finsets also leaves them disjoint. -/
+lemma disjoint_finset_of_disjoint {α : Type*} [fintype α] {s t : set α} (h : disjoint s t) :
+  disjoint s.to_finset t.to_finset :=
+begin
+  rw disjoint,
+  rw disjoint at h,
+  rw le_bot_iff at h,
+  change _ ∩ _ = ∅ at h,
+  rw le_bot_iff,
+  change _ ∩ _ = ∅,
+  rw ←set.to_finset_inter,
+  conv_lhs begin congr, rw h, end,
+  ext; simp,
+end
+
+lemma sdiff_to_finset {α : Type*} [fintype α] (a b : set α) :
+  (a \ b).to_finset = a.to_finset \ b.to_finset := by ext; simp
+
+lemma Union_to_finset_eq_to_finset_bind {ι α : Type*} [fintype ι] [fintype α] (f : ι → set α) :
+  (⋃ i : ι, f i).to_finset = (finset.univ : finset ι).bind(λ i, (f i).to_finset) := by ext; simp
+
+
+end finset
 
 variables {α β : Type*} [group α] [mul_action α β]
 
@@ -80,20 +107,6 @@ begin
   { intro hx, rw hx, exact mul_inv_eq_of_eq_mul rfl }
 end
 
-/-- If two sets are disjoint, converting them to finsets also leaves them disjoint. -/
-lemma disjoint_finset_of_disjoint {α : Type*} [fintype α] {s t : set α} (h : disjoint s t) :
-  disjoint s.to_finset t.to_finset := 
-begin
-  intros a hinter,
-  have hset : a ∈ ∅, 
-  { rw [←set.bot_eq_empty, ←le_bot_iff.mp h],
-    apply (set.mem_inter_iff a s t).mpr,
-    split, 
-      exact set.mem_to_finset.mp (finset.mem_of_mem_inter_left hinter),
-      exact set.mem_to_finset.mp (finset.mem_of_mem_inter_right hinter) },
-  exfalso, exact set.not_mem_empty a hset
-end
-
 lemma card_conj_class_eq_index_centralizer [fintype α] (s : α) :
   fintype.card(conj_class s) = index_subgroup(centralizer_element s) :=
 begin
@@ -132,29 +145,6 @@ begin
   exact λ x hx y hy hxyne, disjoint_finset_of_disjoint (hdisjoint x y hx hy hxyne),
 end
 
-theorem card_eq_card_center_add_sum_card_centralizers' {ι : Type*} [fintype α] (f : ι → α) [fintype ι]
-    (hcover : (finset.univ : finset ι).bind(λ s, (conj_class (f s)).to_finset) = finset.univ \ (subgroup.center α).carrier.to_finset)
-    (hdisjoint : ∀ i j : ι, i ≠ j → disjoint (conj_class (f i)) (conj_class (f j))) :
-  fintype.card α = fintype.card(subgroup.center α) + ∑ s : ι, index_subgroup(centralizer_element (f s)) :=
-begin
-  conv_rhs begin congr, skip, congr, skip, funext, rw ←card_conj_class_eq_index_centralizer, rw ←set.to_finset_card end,
-  change finset.univ.card = fintype.card ↥((subgroup.center α).carrier) + _,
-  rw [←finset.sdiff_union_of_subset (subgroup.center α).carrier.to_finset.subset_univ,
-      finset.card_disjoint_union (finset.sdiff_disjoint), add_comm, ←hcover, finset.card_bind],
-  { rw [add_left_inj, set.to_finset_card] },
-  exact λ i _ j _ hxyne, disjoint_finset_of_disjoint (hdisjoint i j hxyne),
-end
-
-lemma sdiff_to_finset {α : Type*} [fintype α] (a b : set α) :
-  (a \ b).to_finset = a.to_finset \ b.to_finset := by ext; simp
-
-lemma Union_to_finset_eq_to_finset_bind {ι α : Type*} [fintype ι] [fintype α] (f : ι → set α) :
-  (⋃ i : ι, f i).to_finset = (finset.univ : finset ι).bind(λ i, (f i).to_finset) := by ext; simp
-
-lemma not_mem_to_finset {s : set α} [fintype s] {a : α} : a ∉ s.to_finset ↔ a ∉ s :=
-by simp [set.to_finset]
-
---set_option pp.all true
 
 
 lemma hcover_to_finset {ι : Type*} [fintype α] (f : ι → α) [fintype ι]
@@ -176,7 +166,7 @@ begin
 end
 
 
-theorem card_eq_card_center_add_sum_card_centralizers'' {ι : Type*} [fintype α] (f : ι → α) [fintype ι]
+theorem card_eq_card_center_add_sum_card_centralizers' {ι : Type*} [fintype α] (f : ι → α) [fintype ι]
     (hcover : (⋃ s : ι, (conj_class (f s))) = (set.univ \ (subgroup.center α).carrier))
     (hdisjoint : ∀ i j : ι, i ≠ j → disjoint (conj_class (f i)) (conj_class (f j))) :
   fintype.card α = fintype.card(subgroup.center α) + ∑ s : ι, index_subgroup(centralizer_element (f s)) :=
