@@ -164,33 +164,13 @@ begin
   -- rw hcover, -- motive is not type correct
   -- or
   -- rw ←sdiff_to_finset, -- did not find instance of the pattern in the target expression
-  -- and delete the remaining nonsensical mess
+  -- and delete the remaining mess
+  rw set.ext_iff at hcover,
   ext,
-  split,
-  {
-    intro ha,
-    have ha' := set.mem_to_finset.mp ha,
-    rw hcover at ha',
-    apply finset.mem_sdiff.mpr,
-    split,
-    { apply set.mem_to_finset.mpr (set.mem_univ _), },
-    { rw set.mem_diff at ha',
-      cases ha' with ha1 ha2,
-      exact not_mem_to_finset.mpr ha2,
-     }
-  },
-  {
-    intro ha,
-    conv begin congr, skip, congr, rw hcover, end,
-    rw set.mem_to_finset,
-    rw finset.mem_sdiff at ha,
-    cases ha with ha1 ha2,
-    rw set.mem_diff,
-    split,
-    { exact set.mem_univ _, },
-    { apply not_mem_to_finset.mp ha2, }
-  }
-  
+  cases hcover a with h1 h2,
+  simp only [true_and, set.mem_Union, set.mem_univ, set.mem_diff, exists_imp_distrib] at h1 h2,
+  split; simp only [true_and, set.mem_Union, finset.mem_univ, set.mem_to_finset, set.to_finset_univ, finset.mem_sdiff, exists_imp_distrib],
+  exact h1, exact h2,
 end
 
 
