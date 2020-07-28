@@ -38,27 +38,30 @@ begin
   exact fintype.card_congr (is_subgroup.group_equiv_quotient_times_subgroup (subgroup.is_subgroup b)),
 end
 
-def conj_action (α : Type*) [group α] : mul_action α α := {
-  smul := λ a b, a * b * a⁻¹,
-  one_smul := by simp,
-  mul_smul := λ a b c, by group,
-}
-
 def one_le_card_group [fintype α] :
   1 ≤ fintype.card α := by rw ←finset.card_singleton (1 : α); apply finset.card_le_of_subset; simp
 
 def index_subgroup_eq_div [fintype α] (b : subgroup α) :
   index_subgroup b = fintype.card α / fintype.card b := (nat.div_eq_of_eq_mul_left (one_le_card_group) (card_group_eq_index_subgroup_mul_card_subgroup b)).symm
 
+
+def conj_action (α : Type*) [group α] : mul_action α α := {
+  smul := λ a b, a * b * a⁻¹,
+  one_smul := by simp,
+  mul_smul := λ a b c, by group,
+}
+
 /-- Equivalence class of g under conjugation. -/
 def conj_class (g : α) : set α := {a : α | is_conj g a}
 
 lemma mem_self_conj_class (g : α) : g ∈ conj_class g := is_conj_refl g
 
+local attribute [instance] conj_action
+
 /-- The conjugation class of an element is the same as the orbit of that
 element of the group acting on itself under conjugation.-/
 lemma conj_class_eq_orbit_conj_action (g : α) :
-  conj_class g = @mul_action.orbit _ _ _ (conj_action α) g :=
+  conj_class g = mul_action.orbit α g :=
 begin
   rw [conj_class, mul_action.orbit],
   ext, split; intros ha; rcases ha with ⟨m, hm⟩; use m; rw ←hm; refl,
@@ -67,7 +70,7 @@ end
 /-- The stabilizer of an element of the group acting on itself under
 conjugation is the same as the centralizer of that element. -/
 lemma conj_stabilizer_eq_centralizer (g : α) :
-  (@mul_action.stabilizer _ _ _ (conj_action α) g) = (centralizer_element g).carrier :=
+  (mul_action.stabilizer α g) = (centralizer_element g).carrier :=
 begin
   ext,
   simp only [mul_action.stabilizer, centralizer_element, centralizer, set.mem_singleton_iff, forall_eq, set.mem_set_of_eq],
@@ -165,9 +168,8 @@ begin
   -- or
   -- rw ←sdiff_to_finset, -- did not find instance of the pattern in the target expression
   -- and delete the remaining mess
-  rw set.ext_iff at hcover,
   ext,
-  cases hcover a with h1 h2,
+  cases set.ext_iff.mp hcover a with h1 h2,
   simp only [true_and, set.mem_Union, set.mem_univ, set.mem_diff, exists_imp_distrib] at h1 h2,
   split; simp only [true_and, set.mem_Union, finset.mem_univ, set.mem_to_finset, set.to_finset_univ, finset.mem_sdiff, exists_imp_distrib],
   exact h1, exact h2,
