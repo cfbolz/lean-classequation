@@ -127,3 +127,16 @@ begin
   { rw [add_left_inj, set.to_finset_card] },
   exact λ x hx y hy hxyne, disjoint_finset_of_disjoint (hdisjoint x y hx hy hxyne),
 end
+
+theorem card_eq_card_center_add_sum_card_centralizers' {ι : Type*} [fintype α] (f : ι → α) [fintype ι]
+    (hcover : (finset.univ : finset ι).bind(λ s, (conj_class (f s)).to_finset) = finset.univ \ (subgroup.center α).carrier.to_finset)
+    (hdisjoint : ∀ i j : ι, i ≠ j → disjoint (conj_class (f i)) (conj_class (f j))) :
+  fintype.card α = fintype.card(subgroup.center α) + ∑ s : ι, index_subgroup(centralizer_element (f s)) :=
+begin
+  conv_rhs begin congr, skip, congr, skip, funext, rw ←card_conj_class_eq_index_centralizer, rw ←set.to_finset_card end,
+  change finset.univ.card = fintype.card ↥((subgroup.center α).carrier) + _,
+  rw [←finset.sdiff_union_of_subset (subgroup.center α).carrier.to_finset.subset_univ,
+      finset.card_disjoint_union (finset.sdiff_disjoint), add_comm, ←hcover, finset.card_bind],
+  { rw [add_left_inj, set.to_finset_card] },
+  exact λ i _ j _ hxyne, disjoint_finset_of_disjoint (hdisjoint i j hxyne),
+end
