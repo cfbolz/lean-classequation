@@ -19,12 +19,9 @@ begin
   change _ ∩ _ = ∅ ↔ _ ∩ _ = ∅,
   rw ←set.to_finset_inter,
   split,
-  { intro h, conv_lhs begin congr, rw h end, ext, simp },
+  { intro h, simp_rw h, ext, simp },
   { intro h, ext, rw ←set.mem_to_finset, rw h, simp }
 end
-
-lemma sdiff_to_finset {α : Type*} [fintype α] (a b : set α) :
-  (a \ b).to_finset = a.to_finset \ b.to_finset := by ext; simp
 
 lemma Union_to_finset_eq_to_finset_bind {ι α : Type*} [fintype ι] [fintype α] (f : ι → set α) :
   (⋃ i : ι, f i).to_finset = (finset.univ : finset ι).bind(λ i, (f i).to_finset) := by ext; simp
@@ -44,10 +41,9 @@ theorem card_set_eq_sum_card_orbits [fintype β] {ι : Type*} (f : ι → β) [f
     (hdisjoint : ∀ i j : ι, i ≠ j → disjoint (mul_action.orbit α (f i)) (mul_action.orbit α (f j))) :
   fintype.card β = ∑ i : ι, fintype.card(mul_action.orbit α (f i)) :=
 begin
-  conv_rhs begin congr, skip, funext, rw ←set.to_finset_card, end,
+  simp_rw ←set.to_finset_card,
   have hcover' : (finset.univ : finset ι).bind(λ s, (mul_action.orbit α (f s)).to_finset) = finset.univ,
-  { rw [←Union_to_finset_eq_to_finset_bind, ←set.to_finset_univ],
-    conv_lhs begin congr, rw hcover end, congr },
+  { rw [←Union_to_finset_eq_to_finset_bind, ←set.to_finset_univ], simp_rw hcover, congr },
   change finset.univ.card = _,
   rw [←hcover', finset.card_bind],
   exact λ i _ j _ hxyne, disjoint_finset_of_disjoint.mp (hdisjoint i j hxyne),
@@ -139,7 +135,7 @@ begin
   rw index_subgroup,
   apply fintype.card_congr,
   rw conj_class_eq_orbit_conj_action,
-  conv_rhs begin congr, rw ←conj_stabilizer_eq_centralizer, end,
+  simp_rw ←conj_stabilizer_eq_centralizer,
   apply mul_action.orbit_equiv_quotient_stabilizer,
 end
 
@@ -151,21 +147,11 @@ theorem card_eq_card_center_add_sum_card_centralizers' {ι : Type*} [fintype α]
     (hdisjoint : ∀ i j : ι, i ≠ j → disjoint (conj_class (f i)) (conj_class (f j))) :
   fintype.card α = fintype.card(subgroup.center α) + ∑ s : ι, index_subgroup(centralizer_element (f s)) :=
 begin
-  conv_rhs begin congr, skip, congr, skip, funext, rw ←card_conj_class_eq_index_centralizer, rw ←set.to_finset_card end,
+  simp_rw ←card_conj_class_eq_index_centralizer, simp_rw ←set.to_finset_card,
   change finset.univ.card = fintype.card ↥((subgroup.center α).carrier) + _,
   have hcover' : (finset.univ : finset ι).bind(λ s, (conj_class (f s)).to_finset) = finset.univ \ (subgroup.center α).carrier.to_finset,
   { rw [←Union_to_finset_eq_to_finset_bind, ←set.to_finset_univ],
-    -- this part is a mess, but if I do more straightforward things I run into fintype issues.
-    -- I'd like to either do
-    -- rw hcover, -- motive is not type correct
-    -- or
-    -- rw ←sdiff_to_finset, -- did not find instance of the pattern in the target expression
-    -- and delete the remaining mess
-    ext,
-    cases set.ext_iff.mp hcover a with h1 h2,
-    simp only [true_and, set.mem_Union, set.mem_univ, set.mem_diff, exists_imp_distrib] at h1 h2,
-    split; simp only [true_and, set.mem_Union, finset.mem_univ, set.mem_to_finset, set.to_finset_univ, finset.mem_sdiff, exists_imp_distrib],
-    exact h1, exact h2, },
+    simp_rw hcover, tidy },
   rw [←finset.sdiff_union_of_subset (subgroup.center α).carrier.to_finset.subset_univ,
       finset.card_disjoint_union (finset.sdiff_disjoint), add_comm, ←hcover', finset.card_bind],
   { rw [add_left_inj, set.to_finset_card] },
