@@ -142,7 +142,7 @@ end
 /-- Class equation for finite groups: f is an index set of representatives of
 the non-trivial conjugation classes (the trivial ones are all size one, and
 contain each an element of the center of the group). -/
-theorem card_eq_card_center_add_sum_card_centralizers' {ι : Type*} [fintype α] (f : ι → α) [fintype ι]
+theorem card_eq_card_center_add_sum_card_centralizers' [fintype α] {ι : Type*} [fintype ι] (f : ι → α)
     (hcover : (⋃ s : ι, (conj_class (f s))) = (set.univ \ (subgroup.center α)))
     (hdisjoint : ∀ i j : ι, i ≠ j → disjoint (conj_class (f i)) (conj_class (f j))) :
   fintype.card α = fintype.card(subgroup.center α) + ∑ s : ι, index_subgroup(centralizer_element (f s)) :=
