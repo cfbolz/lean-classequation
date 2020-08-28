@@ -87,6 +87,8 @@ def conj_action (α : Type*) [group α] : mul_action α α := {
 /-- Equivalence class of g under conjugation. -/
 def conj_class (g : α) : set α := {a : α | is_conj g a}
 
+lemma mem_conj_class_iff (g₁ g₂ : α) : g₁ ∈ conj_class g₂ ↔ is_conj g₂ g₁ := by rw conj_class; simp
+
 lemma mem_self_conj_class (g : α) : g ∈ conj_class g := is_conj_refl g
 
 local attribute [instance] conj_action
@@ -96,8 +98,13 @@ element of the group acting on itself under conjugation.-/
 lemma conj_class_eq_orbit_conj_action (g : α) :
   conj_class g = mul_action.orbit α g :=
 begin
-  rw [conj_class, mul_action.orbit],
-  ext, split; intros ha; rcases ha with ⟨m, hm⟩; use m; rw ←hm; refl,
+  ext,
+  split;
+  { rw [mem_conj_class_iff, mul_action.mem_orbit_iff],
+    intros ha,
+    rcases ha with ⟨m, hm⟩,
+    use m, rw ←hm,
+    refl},
 end
 
 /-- The centralizer of a set of group elements. -/
