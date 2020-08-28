@@ -3,7 +3,7 @@ import data.fintype.basic
 import group_theory.subgroup
 import group_theory.coset
 import group_theory.group_action
-import deprecated.subgroup
+import group_theory.order_of_element
 
 open_locale classical
 open_locale big_operators
@@ -11,8 +11,10 @@ noncomputable theory
 
 section finset
 
+-- goes to data/finset/basic.lean
+
 /-- Two sets are disjoint iff they are disjoint as finsets. -/
-lemma disjoint_finset_of_disjoint {α : Type*} [fintype α] {s t : set α} :
+lemma disjoint_finset_iff_disjoint {α : Type*} [fintype α] {s t : set α} :
   disjoint s t ↔ disjoint s.to_finset t.to_finset :=
 begin
   rw [disjoint, disjoint, le_bot_iff, le_bot_iff],
@@ -23,7 +25,7 @@ begin
   { intro h, ext, rw ←set.mem_to_finset, rw h, simp }
 end
 
-lemma Union_to_finset_eq_to_finset_bind {ι α : Type*} [fintype ι] [fintype α] (f : ι → set α) :
+lemma Union_to_finset_eq_bind {ι α : Type*} [fintype ι] [fintype α] (f : ι → set α) :
   (⋃ i : ι, f i).to_finset = (finset.univ : finset ι).bind(λ i, (f i).to_finset) := by ext; simp
 
 
@@ -31,6 +33,9 @@ end finset
 
 
 section group_action
+
+-- into group_theory/group_action.lean
+
 
 variables {α β : Type*} [group α] [mul_action α β]
 
@@ -43,10 +48,10 @@ theorem card_set_eq_sum_card_orbits [fintype β] {ι : Type*} (f : ι → β) [f
 begin
   simp_rw ←set.to_finset_card,
   have hcover' : (finset.univ : finset ι).bind(λ s, (mul_action.orbit α (f s)).to_finset) = finset.univ,
-  { rw [←Union_to_finset_eq_to_finset_bind, ←set.to_finset_univ], simp_rw hcover, congr },
+  { rw [←Union_to_finset_eq_bind, ←set.to_finset_univ], simp_rw hcover, congr },
   change finset.univ.card = _,
   rw [←hcover', finset.card_bind],
-  exact λ i _ j _ hxyne, disjoint_finset_of_disjoint.mp (hdisjoint i j hxyne),
+  exact λ i _ j _ hxyne, disjoint_finset_iff_disjoint.mp (hdisjoint i j hxyne),
 end
 
 end group_action
@@ -56,30 +61,21 @@ section group
 
 variables {α β : Type*} [group α] [mul_action α β]
 
-
-instance fintype_quotient (s : set α) [fintype α] (h : is_subgroup s) :
-  fintype(quotient_group.quotient s) := quotient.fintype $ _
-
--- FIXME: make nicer after the is_subgroup refactoring
 def index_subgroup [fintype α] (b : subgroup α) : ℕ :=
-  fintype.card(@quotient_group.quotient _ _ b.carrier (subgroup.is_subgroup b))
+  fintype.card(quotient_group.quotient b)
 
 /-- finite version of Lagrange's theorem: the cardinality of a group is
 the product of the index of a subgroup times the cardinality of the subgroup.
 Follows directly from group_equiv_quotient_times_subgroup -/
 def card_group_eq_index_subgroup_mul_card_subgroup [fintype α] (b : subgroup α) :
-  fintype.card α = index_subgroup b * fintype.card b :=
-begin
-  rw [index_subgroup, ←fintype.card_prod],
-  exact fintype.card_congr (is_subgroup.group_equiv_quotient_times_subgroup (subgroup.is_subgroup b)),
-end
+  fintype.card α = index_subgroup b * fintype.card b := card_eq_card_quotient_mul_card_subgroup _
 
 def one_le_card_group [fintype α] :
   1 ≤ fintype.card α := by rw ←finset.card_singleton (1 : α); apply finset.card_le_of_subset; simp
 
 def index_subgroup_eq_div [fintype α] (b : subgroup α) :
-  index_subgroup b = fintype.card α / fintype.card b := (nat.div_eq_of_eq_mul_left one_le_card_group (card_group_eq_index_subgroup_mul_card_subgroup b)).symm
-
+  index_subgroup b = fintype.card α / fintype.card b :=
+  (nat.div_eq_of_eq_mul_left one_le_card_group (card_group_eq_index_subgroup_mul_card_subgroup b)).symm
 
 
 def conj_action (α : Type*) [group α] : mul_action α α := {
@@ -119,11 +115,11 @@ def centralizer_element (s : α) : subgroup α :=
 /-- The stabilizer of an element of the group acting on itself under
 conjugation is the same as the centralizer of that element. -/
 lemma conj_stabilizer_eq_centralizer (g : α) :
-  (mul_action.stabilizer α g) = (centralizer_element g).carrier :=
+  (mul_action.stabilizer α g) = (centralizer_element g) :=
 begin
   ext,
-  simp only [mul_action.stabilizer, centralizer_element, centralizer, set.mem_singleton_iff, forall_eq, set.mem_set_of_eq],
-  change (x * g * x⁻¹ = g) ↔ _,
+  simp only [mul_action.stabilizer, centralizer_element, centralizer, set.mem_singleton_iff, forall_eq],
+  change (x * g * x⁻¹ = g) ↔ x * g = g * x,
   split,
   { intro hx, apply mul_right_cancel, rw hx, exact eq_mul_inv_of_mul_eq rfl },
   { intro hx, rw hx, exact mul_inv_eq_of_eq_mul rfl }
@@ -132,10 +128,8 @@ end
 lemma card_conj_class_eq_index_centralizer [fintype α] (s : α) :
   fintype.card(conj_class s) = index_subgroup(centralizer_element s) :=
 begin
-  rw index_subgroup,
   apply fintype.card_congr,
-  rw conj_class_eq_orbit_conj_action,
-  simp_rw ←conj_stabilizer_eq_centralizer,
+  simp_rw [conj_class_eq_orbit_conj_action, ←conj_stabilizer_eq_centralizer],
   apply mul_action.orbit_equiv_quotient_stabilizer,
 end
 
@@ -147,15 +141,15 @@ theorem card_eq_card_center_add_sum_card_centralizers' [fintype α] {ι : Type*}
     (hdisjoint : ∀ i j : ι, i ≠ j → disjoint (conj_class (f i)) (conj_class (f j))) :
   fintype.card α = fintype.card(subgroup.center α) + ∑ s : ι, index_subgroup(centralizer_element (f s)) :=
 begin
-  simp_rw ←card_conj_class_eq_index_centralizer, simp_rw ←set.to_finset_card,
+  simp_rw [←card_conj_class_eq_index_centralizer, ←set.to_finset_card],
   change finset.univ.card = fintype.card ↥((subgroup.center α).carrier) + _,
   have hcover' : (finset.univ : finset ι).bind(λ s, (conj_class (f s)).to_finset) = finset.univ \ (subgroup.center α).carrier.to_finset,
-  { rw [←Union_to_finset_eq_to_finset_bind, ←set.to_finset_univ],
+  { rw [←Union_to_finset_eq_bind, ←set.to_finset_univ],
     simp_rw hcover, tidy },
   rw [←finset.sdiff_union_of_subset (subgroup.center α).carrier.to_finset.subset_univ,
       finset.card_disjoint_union (finset.sdiff_disjoint), add_comm, ←hcover', finset.card_bind],
   { rw [add_left_inj, set.to_finset_card] },
-  exact λ i _ j _ hxyne, disjoint_finset_of_disjoint.mp (hdisjoint i j hxyne),
+  exact λ i _ j _ hxyne, disjoint_finset_iff_disjoint.mp (hdisjoint i j hxyne),
 end
 
 end group

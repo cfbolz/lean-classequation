@@ -1,8 +1,8 @@
 [package]
 name = "classequation"
 version = "0.1"
-lean_version = "leanprover-community/lean:3.17.1"
+lean_version = "leanprover-community/lean:3.18.4"
 path = "src"
 
 [dependencies]
-mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "9f51e336d81bfe3d94c27a5c79f6ecd4a55dcdca"}
+mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "2a8d7f3e1e79646b2cc914c477f060123d871a25"}
