@@ -66,7 +66,7 @@ def index_subgroup [fintype α] (b : subgroup α) : ℕ :=
 
 /-- finite version of Lagrange's theorem: the cardinality of a group is
 the product of the index of a subgroup times the cardinality of the subgroup.
-Follows directly from group_equiv_quotient_times_subgroup -/
+Follows directly from `group_equiv_quotient_times_subgroup` -/
 def card_group_eq_index_subgroup_mul_card_subgroup [fintype α] (b : subgroup α) :
   fintype.card α = index_subgroup b * fintype.card b := card_eq_card_quotient_mul_card_subgroup _
 
